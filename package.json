@@ -1,0 +1,14 @@
+{
+  "name": "verificador-alunos",
+  "version": "1.0.0",
+  "description": "Bot",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.15.2",
+    "express": "^4.19.2"
+  }
+}
