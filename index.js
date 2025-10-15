@@ -14,6 +14,9 @@ import {
 } from "discord.js";
 import express from "express";
 
+process.on("unhandledRejection", console.error);
+process.on("uncaughtException", console.error);
+
 // ====== Servidor web (para manter o bot ativo) ======
 const app = express();
 app.get("/", (req, res) => res.send("✅ Bot ativo e rodando."));
