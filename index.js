@@ -11,15 +11,16 @@ import {
   Events,
   REST,
   Routes,
+  PermissionsBitField,
 } from "discord.js";
 import express from "express";
 
-// ====== Servidor web (mantém o bot ativo) ======
+// ====== Servidor Web (mantém o bot ativo no Render) ======
 const app = express();
 app.get("/", (req, res) => res.send("✅ Bot ativo e rodando."));
 app.listen(3000, () => console.log("🌐 Servidor web rodando na porta 3000"));
 
-// ====== Configurações ======
+// ====== Variáveis de ambiente ======
 const TOKEN = process.env.DISCORD_TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
 const GUILD_ID = process.env.GUILD_ID;
@@ -27,19 +28,22 @@ const ROLE_ID = process.env.ROLE_ID;
 const APPS_SCRIPT_URL = process.env.GOOGLE_APPS_SCRIPT_URL;
 const SECURITY_TOKEN = process.env.SECURITY_TOKEN;
 
+// ====== Tratamento de erros globais ======
 process.on("unhandledRejection", console.error);
 process.on("uncaughtException", console.error);
 
+// ====== Inicialização do bot ======
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent, // <- NECESSÁRIO pro !setupbotao
   ],
   partials: [Partials.Channel],
 });
 
-// ====== Registrar /verificar ======
+// ====== Registrar o comando /verificar ======
 const commands = [
   {
     name: "verificar",
@@ -64,11 +68,11 @@ const rest = new REST({ version: "10" }).setToken(TOKEN);
     });
     console.log("✅ Comando /verificar registrado!");
   } catch (err) {
-    console.error("Erro ao registrar comandos:", err);
+    console.error("❌ Erro ao registrar comandos:", err);
   }
 })();
 
-// ====== Função de verificação via Apps Script ======
+// ====== Função de verificação via Google Apps Script ======
 async function verificarEmail(email, claimerId) {
   try {
     const url = `${APPS_SCRIPT_URL}?email=${encodeURIComponent(
@@ -77,6 +81,7 @@ async function verificarEmail(email, claimerId) {
       claimerId
     )}`;
     console.log("🔗 Consultando:", url);
+
     const res = await fetch(url);
     const text = await res.text();
     console.log("📡 Status:", res.status);
@@ -97,7 +102,7 @@ client.once(Events.ClientReady, () => {
   console.log(`🤖 Logado como ${client.user.tag}`);
 });
 
-// ====== Lidando com interações ======
+// ====== Manipular interações (Slash, Botão, Modal) ======
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
     // ---------- SLASH COMMAND ----------
@@ -125,6 +130,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       const row = new ActionRowBuilder().addComponents(inputEmail);
       modal.addComponents(row);
+
       await interaction.showModal(modal);
       return;
     }
@@ -148,7 +154,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-// ====== Função de resposta da verificação ======
+// ====== Resposta da verificação ======
 async function responderVerificacao(interaction, result) {
   if (result.ok) {
     try {
@@ -190,12 +196,20 @@ async function responderVerificacao(interaction, result) {
 
 // ====== Comando !setupbotao ======
 client.on(Events.MessageCreate, async (message) => {
-  if (message.content.startsWith("!setupbotao")) {
-    if (!message.member.permissions.has("Administrator")) {
+  try {
+    // Ignora mensagens de bots
+    if (message.author.bot) return;
+
+    // Comando só funciona com "!setupbotao"
+    if (message.content.trim() !== "!setupbotao") return;
+
+    // Verifica se o usuário é admin
+    if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
       await message.reply("❌ Apenas administradores podem usar este comando.");
       return;
     }
 
+    // Cria botão
     const botao = new ButtonBuilder()
       .setCustomId("abrir_modal_email")
       .setLabel("📧 Verificar E-mail")
@@ -203,12 +217,17 @@ client.on(Events.MessageCreate, async (message) => {
 
     const row = new ActionRowBuilder().addComponents(botao);
 
+    // Envia mensagem com o botão
     await message.channel.send({
       content: "**Clique no botão abaixo para verificar seu e-mail:**",
       components: [row],
     });
+
     await message.reply("✅ Mensagem de verificação criada!");
+  } catch (err) {
+    console.error("❌ Erro no !setupbotao:", err);
   }
 });
 
+// ====== Login ======
 client.login(TOKEN);
