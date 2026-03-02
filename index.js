@@ -189,6 +189,11 @@ client.on(Events.MessageCreate, async (message) => {
   }
 });
 
+// ====== MODO RAIO-X (DEBUG) ======
+client.on("debug", (info) => console.log("🐛 DEBUG DISCORD:", info));
+client.on("warn", (info) => console.log("⚠️ WARN DISCORD:", info));
+client.on("error", (error) => console.error("🚨 ERRO INTERNO DISCORD:", error));
+
 // ====== Login ======
 console.log("⏳ Passo 3: Tentando conectar ao Discord...");
 client.login(TOKEN)
