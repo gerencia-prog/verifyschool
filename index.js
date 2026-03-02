@@ -27,6 +27,10 @@ const GUILD_ID = process.env.GUILD_ID;
 const ROLE_ID = process.env.ROLE_ID;
 const APPS_SCRIPT_URL = process.env.GOOGLE_APPS_SCRIPT_URL;
 const SECURITY_TOKEN = process.env.SECURITY_TOKEN;
+console.log("🔍 DIAGNÓSTICO DE VARIÁVEIS:");
+console.log("- TOKEN existe?", !!TOKEN);
+console.log("- CLIENT_ID existe?", !!CLIENT_ID);
+console.log("- GUILD_ID existe?", !!GUILD_ID);
 
 // ====== Tratamento de erros globais ======
 process.on("unhandledRejection", console.error);
@@ -230,4 +234,8 @@ client.on(Events.MessageCreate, async (message) => {
 });
 
 // ====== Login ======
-client.login(TOKEN);
+client.login(TOKEN).then(() => {
+  console.log("✅ Pedido de login enviado ao Discord com sucesso!");
+}).catch(err => {
+  console.error("🚨 FALHA CRÍTICA NO LOGIN DO DISCORD:", err);
+});
