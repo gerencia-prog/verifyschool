@@ -20,6 +20,12 @@ import express from "express";
 
 console.log("🚀 INICIANDO SCRIPT...");
 
+// ====== TESTE DE REDE ======
+console.log("🌍 Testando conexão direta com o Discord...");
+fetch("https://discord.com/api/v10/gateway")
+  .then(res => console.log("✅ TESTE DE REDE: Discord atendeu! Status:", res.status))
+  .catch(err => console.error("🚨 TESTE DE REDE: Bloqueado pelo firewall/timeout!", err.message));
+
 // ====== Servidor Web ======
 const app = express();
 app.get("/", (req, res) => res.send("✅ Bot ativo e rodando."));
